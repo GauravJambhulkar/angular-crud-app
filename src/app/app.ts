@@ -2,10 +2,12 @@ import { Component, signal, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ThemeService } from './services/theme.service';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
+import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.component';
+import { SnackbarComponent } from './components/snackbar/snackbar.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ThemeToggleComponent],
+  imports: [RouterOutlet, ThemeToggleComponent, ConfirmModalComponent, SnackbarComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
