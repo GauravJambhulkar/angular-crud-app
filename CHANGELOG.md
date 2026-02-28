@@ -6,6 +6,7 @@ Format for each entry:
 - [version] : branch-name : (pull-request-link)
 
 Examples:
+- [0.0.3] : Added new features (searching, sorting, filter by tags, pagination): (https://github.com/GauravJambhulkar/angular-crud-app/pull/3)
 - [0.0.2] : versioning and changelogs added : (https://github.com/GauravJambhulkar/angular-crud-app/pull/2)
 - [0.0.1] : Readme Update : (https://github.com/GauravJambhulkar/angular-crud-app/pull/1)
 

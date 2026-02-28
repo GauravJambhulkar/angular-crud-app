@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { SnackbarService } from '../../components/snackbar/snackbar.component';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -22,8 +23,13 @@ import { ProductService } from '../../services/product.service';
             class="form-control"
             placeholder="Enter product name"
           />
-          @if (form.get('name')?.invalid && form.get('name')?.touched) {
+          @if (form.get('name')?.pending) {
+            <span class="info">Checking availability...</span>
+          }
+          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
             <span class="error">Product name is required</span>
+          } @if (form.get('name')?.hasError('nameTaken') && form.get('name')?.touched) {
+            <span class="error">Name already in use</span>
           }
         </div>
 
@@ -72,6 +78,30 @@ import { ProductService } from '../../services/product.service';
           }
         </div>
 
+        <div class="form-group">
+          <label for="category">Category:</label>
+          <select id="category" formControlName="category" class="form-control">
+            <option value="" disabled>Select category</option>
+            @for (cat of categories; track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+          @if (form.get('category')?.invalid && form.get('category')?.touched) {
+            <span class="error">Category is required</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="tags">Tags (comma separated):</label>
+          <input
+            id="tags"
+            type="text"
+            formControlName="tags"
+            class="form-control"
+            placeholder="e.g. portable, gaming"
+          />
+        </div>
+
         <div class="form-actions">
           <button [disabled]="form.invalid" type="submit" class="btn btn-primary">
             Add Product
@@ -104,6 +134,12 @@ import { ProductService } from '../../services/product.service';
         margin-bottom: 20px;
         display: flex;
         flex-direction: column;
+      }
+
+      .info {
+        color: var(--text-secondary);
+        font-size: 12px;
+        margin-top: 4px;
       }
 
       label {
@@ -174,25 +210,75 @@ import { ProductService } from '../../services/product.service';
       .btn-secondary:hover {
         background-color: var(--btn-secondary-hover);
       }
-    `,
+    `
   ],
 })
 export class AddProductComponent {
   private fb = inject(FormBuilder);
   private productService = inject(ProductService);
   private router = inject(Router);
+  private snack = inject(SnackbarService);
 
   form = this.fb.group({
-    name: ['', Validators.required],
+    name: ['', {
+      validators: [Validators.required],
+      asyncValidators: [this.nameUniqueValidator.bind(this)],
+      updateOn: 'blur'
+    }],
     description: ['', Validators.required],
     price: [0, [Validators.required, Validators.min(0)]],
     quantity: [0, [Validators.required, Validators.min(0)]],
+    category: ['', Validators.required],
+    tags: [''], // comma-separated
   });
+
+  categories = this.productService.getCategories();
+
+  async nameUniqueValidator(control: import('@angular/forms').AbstractControl) {
+    const name = control.value;
+    if (!name) {
+      return null;
+    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (this.productService.isNameTaken(name)) {
+          resolve({ nameTaken: true });
+        } else {
+          resolve(null);
+        }
+      }, 300);
+    });
+  }
 
   onSubmit() {
     if (this.form.valid) {
-      this.productService.addProduct(this.form.getRawValue() as { name: string; description: string; price: number; quantity: number });
-      this.router.navigate(['/']);
+      const raw = this.form.getRawValue() as {
+        name: string;
+        description: string;
+        price: number;
+        quantity: number;
+        category: string;
+        tags: string;
+      };
+      const toSend = {
+        name: raw.name,
+        description: raw.description,
+        price: raw.price,
+        quantity: raw.quantity,
+        category: raw.category,
+        tags: raw.tags
+          ? raw.tags.split(',').map((t) => t.trim()).filter((t) => t)
+          : [],
+      };
+      this.productService
+        .addProduct(toSend)
+        .then(() => {
+          this.snack.show({ text: 'Product added successfully' });
+          this.router.navigate(['/']);
+        })
+        .catch((err) => {
+          this.snack.show({ text: 'Failed to add product: ' + err.message });
+        });
     }
   }
 }
