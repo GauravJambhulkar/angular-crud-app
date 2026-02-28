@@ -1,12 +1,14 @@
 {
   "name": "angular_crud_app",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "release": "npm version patch -m \"chore(release): %s\" && git push --follow-tags",
+    "changelog": "echo \"See CHANGELOG.md for release notes\"",
     "serve:ssr:angular_crud_app": "node dist/angular_crud_app/server/server.mjs"
   },
   "private": true,
